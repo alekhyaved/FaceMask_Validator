@@ -1,0 +1,2 @@
+# FaceMask_Detector_ML
+This project is built, trained to detect whether a person wears a Face Mask which is very important during Covid-19 times. This is built with an intension to make it easier to make security check at the entrance of crowded places to check whether a person wore face mask or not. The technologies and techniques used for developing this is python, Tensor flow with bounding box and classification. 
