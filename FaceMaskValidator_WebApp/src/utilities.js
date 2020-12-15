@@ -7,8 +7,10 @@ const labelMap = {
 
 // Define a drawing function
 export const drawRect = (boxes, classes, scores, threshold, imgWidth, imgHeight, ctx, changeErrorMessage)=>{
-
+    let frameCount = 0;
+    let timeBegin = Date.now();
     for(let i=0; i<=boxes.length; i++){
+        
         if(boxes[i] && classes[i] && scores[i]>threshold){
             // Extract variables
             const [y,x,height,width] = boxes[i]
@@ -23,7 +25,7 @@ export const drawRect = (boxes, classes, scores, threshold, imgWidth, imgHeight,
             // Set styling
             ctx.strokeStyle = labelMap[text]['color']
             ctx.lineWidth = 10
-            ctx.fillStyle = 'white'
+            ctx.fillStyle = 'blue'
             ctx.font = '30px Arial'         
             
             // DRAW!!
@@ -32,5 +34,12 @@ export const drawRect = (boxes, classes, scores, threshold, imgWidth, imgHeight,
             ctx.rect(x*imgWidth, y*imgHeight, width*imgWidth/2, height*imgHeight/1.5);
             ctx.stroke()
         }
+        frameCount++;
     }
+    let timeEnd = Date.now();
+    
+// Do your operations
+
+    let fps = frameCount/(timeEnd - timeBegin);
+    // console.log("fps", fps);
 }

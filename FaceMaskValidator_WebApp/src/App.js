@@ -24,6 +24,7 @@ function App() {
     // e.g. const net = await cocossd.load();
     // https://storage.cloud.google.com/facemaskbucket/model.json'
     // https://storage.cloud.google.com/facemaskvalidator/model.json
+    // this.fps = 0;  // this line is added for fps
     const net = await tf.loadGraphModel('https://storage.cloud.google.com/facemaskvalidator/model.json')
     
     //  Loop and detect hands
@@ -34,12 +35,14 @@ function App() {
 
   const detect = async (net) => {
     // Check data is available
+    let timeBegin = Date.now();
     if (
       typeof webcamRef.current !== "undefined" &&
       webcamRef.current !== null &&
       webcamRef.current.video.readyState === 4
     ) {
       // Get Video Properties
+      // let timeBegin = Date.now(); //this line is added for fps
       const video = webcamRef.current.video;
       const videoWidth = webcamRef.current.video.videoWidth;
       const videoHeight = webcamRef.current.video.videoHeight;
@@ -58,7 +61,7 @@ function App() {
       const casted = resized.cast('int32')
       const expanded = casted.expandDims(0)
       const obj = await net.executeAsync(expanded)
-      // console.log(obj)
+      console.log(obj)
 
       const boxes = await obj[7].array() 
       // the array id that has size 400 in it and it represent the set of boxes which 
@@ -72,18 +75,27 @@ function App() {
       // we need to consider the 3rd array with size 100 which represents the accuracy score
       // scores[0][0] displays accuracy in an Array[100] = [0: 0.9893999695777893, 1: 0.023379910737276077, 2: 0.022201498970389366]
       // console.log(scores[0])
-  
+      // self.fps = Math.round(1000 / (timeEnd - timeBegin)); // this line is added for fps
+      // console.log(Math.round(1000/(timeEnd - timeBegin)))
+      // let timeEnd = Date.now();
+      // let fps = Math.round(10000 / (timeEnd - timeBegin));
+      // console.log("fps", fps);
+
       let tempAccuracy = accuracy;
       if(tempAccuracy.length === 100) {
-        tempAccuracy = tempAccuracy.slice(0);
+        tempAccuracy.splice(0, 1);
       }
       tempAccuracy.push(scores[0][0]);
       setAccuracy(tempAccuracy);
-      renderChart(tempAccuracy);
+
+      setTimeout(() => {
+        renderChart(tempAccuracy);
+      }, 1000)
+      
       // Draw mesh
       const ctx = canvasRef.current.getContext("2d");
-
-      // 5. TODO - Update drawing utility
+      // console.log(self.fps)
+      // Update drawing utility
       // drawSomething(obj, ctx)  
       requestAnimationFrame(()=>{drawRect(boxes[0], classes[0], scores[0], 0.5, videoWidth, videoHeight, ctx, changeErrorMessage)}); 
 
@@ -93,28 +105,39 @@ function App() {
       tf.dispose(expanded)
       tf.dispose(obj)
     }
-  };
 
+
+
+  };
   let changeErrorMessage = (msg) => {
     setErrorMessage(msg);
   }
-
   let renderChart = (dataArray) => {
   var chart = c3.generate({
     bindto: '#accuracy-chart',
     data: {
         columns: [
           ['Accuracy', ...dataArray]
-        ]
+        ],
+        colors: {
+          Accuracy: '#900C3F'
+      }
+        
     }
   });
 }
-  
+  // getFPS(){
+  //   console.log(this.fps)
+  //   return this.fps;
+  // };
+
+
   useEffect(()=>{
     runCoco()
     renderChart(accuracy)
   },[]);
 
+  
   return (
     <div className="App">
       <h1>Face Mask Detection</h1>
@@ -135,7 +158,6 @@ function App() {
             height: 480,
           }}
         />
-
         <canvas
           ref={canvasRef}
           style={{
@@ -150,11 +172,15 @@ function App() {
             height: 480,
           }}
         />
+        {/* <div id="accuracy-chart" style={{marginLeft:650, width:520,height:320,color:"red"}}></div> */}
+      
       </header>
-      <div> <h2>Visualization Dashboard</h2>
-      {/* Temporarily displaying image but use canvasjs graphs to plot live visualization of accuracy https://canvasjs.com/react-stockcharts/spline-area-stockchart-range-selector-react/ */}
-      {/* <img src={require('./tensorflowboard.png')} /> */}
+      <div> 
+      <h2>Visualizations</h2>
+      <h3 style={{textAlign:"left"}}>Accuracy Score board</h3>
       <div id="accuracy-chart"></div>
+      <h3 style={{textAlign:"left"}}>Tensorflow board with reduction in training loss </h3>
+      <img src={require('./tensorflowboard.png')} />
     </div>
     </div>
 
